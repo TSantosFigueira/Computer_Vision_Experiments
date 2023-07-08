@@ -20,21 +20,35 @@ answer_sheet = cv2.imread(args['answerSheet'], cv2.IMREAD_GRAYSCALE)
 assert answer_sheet is not None, 'Image not loaded'
 
 #answer_sheet = cv2.GaussianBlur(answer_sheet, ksize=(3,3), sigmaX=0)
-#answer_sheet = cv2.bilateralFilter(answer_sheet, 13, 0, 0)
-thresh_img = cv2.threshold(answer_sheet, 127, 255, cv2.THRESH_BINARY_INV)[1]
+#answer_sheet = cv2.bilateralFilter(answer_sheet, 13, 60, 40)
+thresh_img = cv2.threshold(answer_sheet, 127, 255, cv2.THRESH_BINARY)[1]
 
 contours, hierarchy = cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+print(len(contours))
 
 for contour in contours:
     # Get the bounding box coordinates
     x, y, w, h = cv2.boundingRect(contour)
+     
+    middle = (x + (x + w)) // 2
+    end = (x + w) - middle
 
-    cropped_image = thresh_img[y:y+h, x:x+w]
-    data = pytesseract.image_to_data(cropped_image, config="--psm 4", output_type=Output.DICT)
-    print(data['text'])
+    cropped_image = thresh_img[y:y+h, middle+10:middle+50]
 
-cv2.imshow('img', cropped_image)
-cv2.waitKey(0)
+    #cropped_image = cv2.dilate(cropped_image, None)
+    cropped_image = cv2.resize(cropped_image, None, fx=2, fy=2)
+
+    cv2.imshow('img', cropped_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    
+    text = pytesseract.image_to_string(cropped_image, config="--psm 10 --oem 3 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    print(text)
+
+#cv2.imshow('img', cropped_image)
+#cv2.waitKey(0)
+cv2.destroyAllWindows()
 
 '''
 #d = pytesseract.image_to_data(answer_sheet, config="--psm 4", output_type=Output.DICT)
@@ -68,6 +82,5 @@ for b in boxes.splitlines():
     img = cv2.rectangle(answer_sheet, (int(b[1]), h - int(b[2])), (int(b[3]), h - int(b[4])), (0, 255, 0), 2)
 
 cv2.imshow('img', img)
-cv2.waitKey(0)'''
-
-cv2.destroyAllWindows()
+cv2.waitKey(0)
+cv2.destroyAllWindows()'''
